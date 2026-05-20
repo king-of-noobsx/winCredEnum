@@ -43,6 +43,17 @@ If execution policies restrict script execution on the victim host, use the foll
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\winCredEnum_v3.ps1
 ```
+### 2. Changing Session Policy (Proccess Level) : >
+
+```powershell
+Set-ExecutionPolicy -ExecutionPolicy Bypass -Scope Process
+```
+Click Enter
+
+```powershell
+.\winCredEnum_v7.ps1
+```
+
 
 # ⚖️ Disclaimer
 
