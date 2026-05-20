@@ -58,3 +58,6 @@ Click Enter
 # ⚖️ Disclaimer
 
 This utility is developed solely for authorized security testing, educational validation contexts within internal labs, and legitimate penetration testing engagements. Execution against production networks without prior official explicit written sign-off is strictly prohibited. The developer takes no responsibility for structural degradation or malicious utilization of this repository framework.
+
+Copyright (c) 2026 Amr Mohamed Ragheb (King Of Noobs)
+The Noobs state remains and expands ⚔ 
